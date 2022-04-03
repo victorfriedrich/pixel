@@ -14,10 +14,13 @@ const upload = multer({ dest: `${__dirname}/uploads/` });
 
 const VALID_COLORS = ['#BE0039', '#FF4500', '#FFA800', '#FFD635', '#00A368', '#00CC78', '#7EED56', '#00756F', '#009EAA', '#2450A4', '#3690EA', '#51E9F4', '#493AC1', '#6A5CFF', '#811E9F', '#B44AC0', '#FF3881', '#FF99AA', '#6D482F', '#9C6926', '#000000', '#898D90', '#D4D7D9', '#FFFFFF'];
 
+
+const currentImage = getImage()
 var appData = {
-    currentJson: {},
-    currentMap: 'blank.png',
+    currentJson: getJson(),
+    currentMap: currentImage,
     mapHistory: [
+        currentImage
     ]
 };
 var brandUsage = {};
@@ -45,61 +48,6 @@ app.get('/api/stats', (req, res) => {
         date: Date.now()
     });
 });
-
-// app.post('/updateorders', upload.single('image'), async (req, res) => {
-//     if (!req.body.reason || !req.body.password || req.body.password != process.env.PASSWORD) {
-//         res.send('Ongeldig wachtwoord!');
-//         fs.unlinkSync(req.file.path);
-//         return;
-//     }
-
-//     if (req.file.mimetype !== 'image/png') {
-//         res.send('Bestand moet een PNG zijn!');
-//         fs.unlinkSync(req.file.path);
-//         return;
-//     }
-
-//     getPixels(req.file.path, 'image/png', function (err, pixels) {
-//         if (err) {
-//             res.send('Fout bij lezen bestand!');
-//             console.log(err);
-//             fs.unlinkSync(req.file.path);
-//             return
-//         }
-
-//         if (pixels.data.length !== 8000000) {
-//             res.send('Bestand moet 2000x1000 zijn!');
-//             fs.unlinkSync(req.file.path);
-//             return;
-//         }
-
-//         for (var i = 0; i < 2000000; i++) {
-//             const r = pixels.data[i * 4];
-//             const g = pixels.data[(i * 4) + 1];
-//             const b = pixels.data[(i * 4) + 2];
-
-//             const hex = rgbToHex(r, g, b);
-//             if (VALID_COLORS.indexOf(hex) === -1) {
-//                 res.send(`Pixel op ${i % 2000}, ${Math.floor(i / 2000)} heeft ongeldige kleur.`);
-//                 fs.unlinkSync(req.file.path);
-//                 return;
-//             }
-//         }
-
-//         const file = `${Date.now()}.png`;
-//         fs.copyFileSync(req.file.path, `${__dirname}/maps/${file}`);
-//         fs.unlinkSync(req.file.path);
-//         appData.currentMap = file;
-//         appData.mapHistory.push({
-//             file,
-//             reason: req.body.reason,
-//             date: Date.now()
-//         })
-//         wsServer.clients.forEach((client) => client.send(JSON.stringify({ type: 'map', data: file, reason: req.body.reason })));
-//         fs.writeFileSync(`${__dirname}/data.json`, JSON.stringify(appData));
-//         res.redirect('/');
-//     });
-// });
 
 wsServer.on('connection', (socket) => {
     socket.id = socketId++;
@@ -156,43 +104,60 @@ setInterval(() => {
     }, {});
 }, 1000);
 
-setInterval(() => {
+function getJson() {
     request(
         { uri: PIXEL_URL },
-        function (error, response, body) {
+        function (error, _response, body) {
             if (error) {
                 console.log(error);
-                return;
+                return undefined;
             }
             try {
-                newJson = JSON.parse(body);
-                if (JSON.stringify(appData.currentJson) != JSON.stringify(newJson)) {
-                    appData.currentJson = newJson;
-                    wsServer.clients.forEach((client) => client.send(JSON.stringify({ type: 'map', data: newJson, reason: null })));
-                    console.log("[+] New map received!");
-
-                    const file = `${Date.now()}.png`;
-                    const path = `${__dirname}/maps/${file}`
-                    request
-                        .get(IMAGE_URL)
-                        .on('error', function (err) {
-                            console.error(err)
-                            return;
-                        })
-                        .pipe(fs.createWriteStream(path));
-                    appData.currentMap = file;
-                    appData.mapHistory.push({
-                        file,
-                        reason: "Github Update",
-                        date: Date.now()
-                    })
-                }
+                return newJson = JSON.parse(body);
             } catch (e) {
                 console.log(e);
-                return;
+                return undefined;
             }
         }
     );
+}
+
+function getImage() {
+    const file = `${Date.now()}.png`;
+    const path = `${__dirname}/maps/${file}`
+    request
+        .get(IMAGE_URL)
+        .on('error', function (err) {
+            console.error(err)
+            return undefined;
+        })
+        .pipe(fs.createWriteStream(path));
+    return file
+}
+
+setInterval(() => {
+    const newJson = getJson();
+    if (newJson) {
+        // got new map
+        if (JSON.stringify(newJson) != JSON.stringify(appData.currentJson)) {
+
+            appData.currentJson = newJson;
+            wsServer.clients.forEach((client) => client.send(JSON.stringify({ type: 'map', data: newJson, reason: null })));
+            console.log("[+] New map received!");
+
+            //get new image
+            const file = getImage();
+            if (file) {
+                appData.currentMap = file;
+                appData.mapHistory.push({
+                    file,
+                    reason: "Github Update",
+                    date: Date.now()
+                })
+            }
+
+        }
+    } 
 }, 60000);
 
 function rgbToHex(r, g, b) {
