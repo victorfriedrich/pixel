@@ -5,15 +5,8 @@ const request = require('request');
 
 const app = express();
 
-const multer = require('multer');
-const { createCipheriv } = require('crypto');
-
 PIXEL_URL = "https://raw.githubusercontent.com/etonaly/pixel/main/pixel.json"
 IMAGE_URL = "https://github.com/etonaly/pixel/raw/main/output.png"
-const upload = multer({ dest: `${__dirname}/uploads/` });
-
-const VALID_COLORS = ['#BE0039', '#FF4500', '#FFA800', '#FFD635', '#00A368', '#00CC78', '#7EED56', '#00756F', '#009EAA', '#2450A4', '#3690EA', '#51E9F4', '#493AC1', '#6A5CFF', '#811E9F', '#B44AC0', '#FF3881', '#FF99AA', '#6D482F', '#9C6926', '#000000', '#898D90', '#D4D7D9', '#FFFFFF'];
-
 
 const currentImage = getImage()
 var appData = {
@@ -159,10 +152,6 @@ setInterval(() => {
         }
     } 
 }, 60000);
-
-function rgbToHex(r, g, b) {
-    return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
-}
 
 function isAlphaNumeric(str) {
     var code, i, len;
