@@ -47,7 +47,7 @@ name = "pleadfish"
 file = "images/pleadfish.png"
 startx = 1333
 starty = 753
-priority = 1
+priority = 5
 
 #[[structure]]
 #name = "fish-background"
@@ -82,4 +82,4 @@ name = "logo2outline"
 file = "images/tum_outline_large.png"
 startx = 1235
 starty = 1172
-priority = 5
+priority = 4
