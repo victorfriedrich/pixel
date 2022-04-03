@@ -18,7 +18,6 @@ var appData = {
     currentJson: {},
     currentMap: 'blank.png',
     mapHistory: [
-        { file: 'blank.png', reason: 'Init ^Noah', date: 1648890843309 }
     ]
 };
 var brandUsage = {};
@@ -167,7 +166,7 @@ setInterval(() => {
             }
             try {
                 newJson = JSON.parse(body);
-                if (appData.currentJson != newJson) {
+                if (JSON.stringify(appData.currentJson) != JSON.stringify(newJson)) {
                     appData.currentJson = newJson;
                     wsServer.clients.forEach((client) => client.send(JSON.stringify({ type: 'map', data: newJson, reason: null })));
                     console.log("[+] New map received!");
@@ -181,6 +180,7 @@ setInterval(() => {
                             return;
                         })
                         .pipe(fs.createWriteStream(path));
+                    appData.currentMap = file;
                     appData.mapHistory.push({
                         file,
                         reason: "Github Update",
