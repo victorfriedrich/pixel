@@ -19,7 +19,14 @@ name = "tum"
 file = "images/logo_fish.png"
 startx = 1333
 starty = 763
-priority = 1
+priority = 5
+
+[[structure]]
+name = "rwth"
+file = "images/rwth.png"
+startx = 1333
+starty = 763
+priority = 5
 
 [[structure]]
 name = "rwth2"
