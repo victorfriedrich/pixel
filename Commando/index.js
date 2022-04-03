@@ -2,20 +2,34 @@ const express = require('express');
 const fs = require('fs');
 const ws = require('ws');
 const request = require('request');
+const signale = require('signale');
 
 const app = express();
 
 PIXEL_URL = "https://raw.githubusercontent.com/etonaly/pixel/main/pixel.json"
 IMAGE_URL = "https://github.com/etonaly/pixel/raw/main/output.png"
-
-const currentImage = getImage()
+COMMIT_URL = "https://api.github.com/repos/etonaly/pixel/commits/main?path=pixel.json"
 var appData = {
-    currentJson: getJson(),
-    currentMap: currentImage,
-    mapHistory: [
-        currentImage
-    ]
-};
+    currentJson: {},
+    currentMap: "blank.png",
+    mapHistory: [],
+}
+getImage().then(image => {
+    appData.currentMap = image;
+    getLatestCommitMessage().then(message => {
+        appData.mapHistory = [{
+            image,
+            reason: message,
+            date: Date.now()
+        }]
+    }).catch(err => { signale.error(err) })
+}).catch(err => { signale.error(err) });
+
+getJson().then(json => {
+    appData.currentJson = json;
+}).catch(err => { signale.error(err) })
+
+
 var brandUsage = {};
 var socketId = 0;
 
@@ -71,10 +85,10 @@ wsServer.on('connection', (socket) => {
                 socket.brand = data.brand;
                 break;
             case 'getmap':
-                socket.send(JSON.stringify(appData.currentJson));
+                socket.send(JSON.stringify({ type: 'map', data: appData.currentJson }));
                 break;
             case 'getmapimage':
-                socket.send(JSON.stringify({ type: 'map', data: appData.cuurentMap, reason: null }))
+                socket.send(JSON.stringify({ type: 'mapimage', data: appData.currentMap, reason: null }))
                 break;
             case 'ping':
                 socket.send(JSON.stringify({ type: 'pong' }));
@@ -98,39 +112,63 @@ setInterval(() => {
 }, 1000);
 
 function getJson() {
-    request(
-        { uri: PIXEL_URL },
-        function (error, _response, body) {
-            if (error) {
-                console.log(error);
-                return undefined;
+    return new Promise(function (resolve, reject) {
+        request(
+            { uri: PIXEL_URL },
+            function (error, _response, body) {
+                if (error) {
+                    console.log(error);
+                    reject(error);
+                }
+                try {
+                    resolve(JSON.parse(body));
+                } catch (e) {
+                    console.log(e);
+                    reject(error);
+                }
             }
-            try {
-                return newJson = JSON.parse(body);
-            } catch (e) {
-                console.log(e);
-                return undefined;
-            }
-        }
-    );
+        )
+    })
 }
 
 function getImage() {
-    const file = `${Date.now()}.png`;
-    const path = `${__dirname}/maps/${file}`
-    request
-        .get(IMAGE_URL)
-        .on('error', function (err) {
-            console.error(err)
-            return undefined;
-        })
-        .pipe(fs.createWriteStream(path));
-    return file
+    return new Promise(function (resolve, reject) {
+        const file = `${Date.now()}.png`;
+        const path = `${__dirname}/maps/${file}`
+        request
+            .get(IMAGE_URL)
+            .on('error', function (err) {
+                console.error(err)
+                reject(err);
+            })
+            .pipe(fs.createWriteStream(path));
+        resolve(file);
+    });
+}
+
+function getLatestCommitMessage() {
+    return new Promise(function (resolve, reject) {
+        request(
+            { uri: COMMIT_URL, headers: { 'User-Agent': "Mozilla/5.0 (Linux; Android 8.0.0; SM-G960F Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.84 Mobile Safari/537.36" } },
+            function (error, _response, body) {
+                if (error) {
+                    console.log(error);
+                    resolve("Github Update");
+                }
+                try {
+                    const commits = JSON.parse(body);
+                    resolve(commits["commit"]["message"]);
+                } catch (e) {
+                    console.log(e);
+                    resolve("Github Update");
+                }
+            }
+        )
+    });
 }
 
 setInterval(() => {
-    const newJson = getJson();
-    if (newJson) {
+    getJson().then(newJson => {
         // got new map
         if (JSON.stringify(newJson) != JSON.stringify(appData.currentJson)) {
 
@@ -139,18 +177,21 @@ setInterval(() => {
             console.log("[+] New map received!");
 
             //get new image
-            const file = getImage();
-            if (file) {
-                appData.currentMap = file;
-                appData.mapHistory.push({
-                    file,
-                    reason: "Github Update",
-                    date: Date.now()
-                })
-            }
-
+            getImage().then(file => {
+                if (file) {
+                    appData.currentMap = file;
+                    getLatestCommitMessage().then(message => {
+                        appData.mapHistory.push({
+                            file,
+                            reason: message,
+                            date: Date.now()
+                        })
+                    }).catch(err => { signale.error(err) })
+                }
+            }).catch(err => { signale.error(err) })
         }
-    } 
+    }).catch(err => { signale.error(err) })
+
 }, 60000);
 
 function isAlphaNumeric(str) {
