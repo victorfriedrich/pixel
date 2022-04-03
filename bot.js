@@ -78,10 +78,11 @@ const COLOR_MAPPINGS = {
 
     const interval = 300 / args.length;
     var delay = 0;
-    for (const accessToken of args) {
-        setTimeout(() => attemptPlace(accessToken), delay * 1000);
+    for (let accessToken of args) {
+        t(accessToken, delay * 10);
         delay += interval;
     }
+    console.log("Setup complete")
 })();
 
 let rgbaJoin = (a1, a2, rowSize = 1000, cellSize = 4) => {
@@ -163,16 +164,21 @@ function connectSocket() {
     };
 }
 
+function t(token, time) {
+    setTimeout((t) => attemptPlace(t), time, token)
+}
+
 async function attemptPlace(token) {
     var map0;
     var map1;
+    console.log(`Trying to place with ${token}`)
     let retry = () => attemptPlace(token);
     try {
         map0 = await getMapFromUrl(await getCurrentImageUrl('0'))
         map1 = await getMapFromUrl(await getCurrentImageUrl('1'));
     } catch (e) {
         signale.warn('Fehler beim Abrufen der Zeichenfläche. Neuer Versuch in 15 Sekunden: ', e);
-        setTimeout(retry, 15000); // probeer opnieuw in 15sec.
+        t(token, 15000); // probeer opnieuw in 15sec.
         return;
     }
 
@@ -214,7 +220,7 @@ async function attemptPlace(token) {
         const minutes = Math.floor(waitFor / (1000 * 60))
         const seconds = Math.floor((waitFor / 1000) % 60)
         signale.info('Warten auf Abkühlzeit ' + minutes + ':' + seconds + ' bis ' + new Date(nextAvailablePixelTimestamp).toLocaleTimeString());
-        setTimeout(retry, waitFor);
+        t(token, waitFor);
     }
 
     if (foundPixel) {
@@ -223,7 +229,7 @@ async function attemptPlace(token) {
     }
 
     signale.success('Alle bestellten Pixel haben bereits die richtige Farbe!');
-    setTimeout(retry, 2 * 1000); // probeer opnieuw in 30sec.
+    t(token, 2000); // probeer opnieuw in 30sec.
 }
 
 
