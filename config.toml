@@ -25,7 +25,7 @@ name = "rwth2"
 file = "images/rwth+fh-big.png"
 startx = 1332
 starty = 1172
-priority = 3
+priority = 0
 
 [[structure]]
 name = "hwst"
