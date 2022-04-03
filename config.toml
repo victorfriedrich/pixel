@@ -4,7 +4,7 @@ ignore_colors = [
 	[0xff, 0x00, 0xf8, 0xff]
 ]
 
-version = 15
+version = 16
 
 [priorities]
 "0" = 0
