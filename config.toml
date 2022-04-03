@@ -27,12 +27,12 @@ startx = 1332
 starty = 1172
 priority = 3
 
-#[[structure]]
-#name = "hwst"
-#file = "images/hswt.png"
-#startx = 251
-#starty = 1201
-#priority = 2
+[[structure]]
+name = "hwst"
+file = "images/hswt.png"
+startx = 1235
+starty = 1201
+priority = 2
 
 #[[structure]]
 #name = "pleadfish"
