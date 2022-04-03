@@ -130,7 +130,7 @@ async function refreshTokens() {
         tokens.push(token);
     }
 
-    signale.info("Refreshed tokens: ", tokens)
+    signale.info("Refreshed tokens: ", sanetizeTokens(tokens))
 
     args = tokens;
     defaultAccessToken = tokens[0];
@@ -195,7 +195,7 @@ function t(token, time) {
 async function attemptPlace(token) {
     var map0;
     var map1;
-    signale.info(`Trying to place with ${token}`)
+    signale.info(`Trying to place with ${sanetizeToken(token)}`)
     let retry = () => attemptPlace(token);
     try {
         map0 = await getMapFromUrl(await getCurrentImageUrl('0'))
@@ -412,4 +412,12 @@ function getRgbaAt(rgbaCanvas, x, y) {
 
 function rgbToHex(r, g, b) {
     return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1).toUpperCase();
+}
+
+function sanetizeToken(token) {
+	return "*".repeat(token.length - 5) + token.slice(-5)
+}
+
+function sanetizeTokens(list) {
+	return list.map(sanetizeToken)
 }
