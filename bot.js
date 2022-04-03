@@ -24,8 +24,10 @@ signale.config({
 
 var placeOrders = [];
 
+let args=null
+
 try {
-    const args = JSON.parse(process.env.PLACE_TOKENS);
+    args = JSON.parse(process.env.PLACE_TOKENS);
 } catch (e) {
     signale.error("Invalid array in PLACE_TOKENS env var: " + e);
     process.exit(1);
