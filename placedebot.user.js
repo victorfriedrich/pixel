@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceDE Bot
 // @namespace    https://github.com/PlaceDE/Bot
-// @version      13
+// @version      14
 // @description  /r/place bot
 // @author       NoahvdAa, reckter, SgtChrome, nama17
 // @match        https://www.reddit.com/r/place/*
@@ -17,11 +17,12 @@
 
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
 
+var socket;
 var placeOrders = [];
 var accessToken;
 var canvas = document.createElement('canvas');
 
-const VERSION = 13
+const VERSION = 14
 var UPDATE_PENDING = false;
 
 const COLOR_MAPPINGS = {
@@ -67,8 +68,10 @@ const COLOR_MAPPINGS = {
 		duration: 10000
 	}).showToast();
 
-	setInterval(updateOrders, 5 * 60 * 1000); // Update orders elke vijf minuten.
-	await updateOrders();
+	connectSocket();
+	setInterval(() => {
+        if (socket) socket.send(JSON.stringify({ type: 'ping' }));
+    }, 5000);
 	attemptPlace();
 })();
 
@@ -87,6 +90,72 @@ function getPixelList() {
 	}
 	shuffleWeighted(structures);
 	return structures.map(structure => structure.pixels).flat();
+}
+
+function connectSocket() {
+	Toastify({
+		text: 'Verbinden mit Commando server...',
+		duration: 10000
+	}).showToast();
+
+    socket = new WebSocket('wss://place.computerscholler.com/api/ws');
+
+    socket.onerror = function(e) {
+        console.error("Socket error: " + e.message)
+    }
+
+    socket.onopen = function () {
+		Toastify({
+			text: 'Verbunden mit Commando server!',
+			duration: 10000
+		}).showToast();
+        socket.send(JSON.stringify({ type: 'getmap' }));
+        socket.send(JSON.stringify({ type: 'brand', brand: `userscriptV${VERSION}` }));
+    };
+
+    socket.onmessage = async function (message) {
+        var data;
+        try {
+            data = JSON.parse(message.data);
+        } catch (e) {
+            return;
+        }
+
+        switch (data.type.toLowerCase()) {
+            case 'map':
+				if(data.data === undefined) {
+					socket.send(JSON.stringify({ type: 'getmap' }));
+					break;
+				}
+				Toastify({
+                    text: `Neue map geladen (reason: ${data.reason ? data.reason : 'verbunden mit server'})`,
+                    duration: 10000
+                }).showToast();
+                const structureCount = Object.keys(data.data.structures).length;
+            let pixelCount = 0;
+            for (const structureName in data.data.structures) {
+                pixelCount += data.data.structures[structureName].pixels.length;
+            }
+			Toastify({
+				text: 'Neue Strukturen geladen. Bilder: ' + structureCount + ' - Pixels: ' + pixelCount + '.',
+				duration: 10000
+			}).showToast();
+            placeOrders = data.data;
+                break;
+            default:
+                break;
+        }
+    };
+
+    socket.onclose = function (e) {
+		Toastify({
+            text: `Commando server hat die Verbindung unterbrochen`,
+            duration: 10000
+        }).showToast();
+       console.error('Socketfehler: ', e);
+        socket.close();
+        setTimeout(connectSocket, 1000);
+    };
 }
 
 async function attemptPlace() {
