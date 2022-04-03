@@ -18,7 +18,7 @@ version = 16
 name = "old-stuff"
 file = "images/everything.png"
 startx = 1333
-starty = 763
+starty = 753
 priority = 5
 
 [[structure]]
