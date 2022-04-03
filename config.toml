@@ -19,12 +19,12 @@ startx = 1333
 starty = 763
 priority = 3
 
-[[structure]]
-name = "rwth"
-file = "images/rwth.png"
-startx = 1333
-starty = 753
-priority = 1
+# [[structure]]
+# name = "rwth"
+# file = "images/rwth.png"
+# startx = 1333
+# starty = 753
+# priority = 2
 
 [[structure]]
 name = "pleadfish"
