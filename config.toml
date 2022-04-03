@@ -26,14 +26,14 @@ name = "rwth2"
 file = "images/rwth+fh-big.png"
 startx = 1332
 starty = 1172
-priority = 1
+priority = 0
 
 [[structure]]
 name = "hwst"
 file = "images/hswt.png"
 startx = 1235
 starty = 1201
-priority = 2
+priority = 0
 
 #[[structure]]
 #name = "fish-background"
@@ -54,18 +54,11 @@ name = "slime"
 file = "images/slime.png"
 startx = 1332
 starty = 753
-priority = 1
+priority = 0
 
 [[structure]]
 name = "logo2"
-file = "images/tum_large.png"
-startx = 1235
-starty = 1172
-priority = 4
-
-[[structure]]
-name = "logo2outline"
-file = "images/tum_outline_large.png"
+file = "images/tum_medium.png"
 startx = 1235
 starty = 1172
 priority = 5
