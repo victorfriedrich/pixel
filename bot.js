@@ -202,8 +202,8 @@ async function attemptPlace(token) {
     try {
         map0 = await getMapFromUrl(await getCurrentImageUrl('0'))
         map1 = await getMapFromUrl(await getCurrentImageUrl('1'));
-		map2 = await getCanvasFromUrl(await getCurrentImageUrl('2'))
-		map3 = await getCanvasFromUrl(await getCurrentImageUrl('3'))
+		map2 = await getMapFromUrl(await getCurrentImageUrl('2'))
+		map3 = await getMapFromUrl(await getCurrentImageUrl('3'))
     } catch (e) {
         signale.warn('Fehler beim Abrufen der Zeichenfläche. Neuer Versuch in 15 Sekunden: ', e);
         t(token, 15000); // probeer opnieuw in 15sec.
