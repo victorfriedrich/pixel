@@ -45,7 +45,7 @@ priority = 0
 [[structure]]
 name = "augsburg"
 file = "images/augsburg.png"
-startx = 1332
+startx = 1362
 starty = 765
 priority = 4
 
