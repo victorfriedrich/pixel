@@ -21,7 +21,7 @@ priority = 3
 
 [[structure]]
 name = "rwth"
-file = "images/rwth+fh.png"
+file = "images/rwth.png"
 startx = 1333
 starty = 753
 priority = 2
