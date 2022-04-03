@@ -23,14 +23,14 @@ priority = 3
 name = "rwth"
 file = "images/rwth+fh.png"
 startx = 1333
-starty = 753
+starty = 1193
 priority = 2
 
 [[structure]]
 name = "hwst"
 file = "images/hswt.png"
-startx = 1376
-starty = 1274
+startx = 251
+starty = 1193
 priority = 2
 
 [[structure]]
@@ -64,6 +64,6 @@ priority = 2
 [[structure]]
 name = "logo2"
 file = "images/tum_large.png"
-startx = 1376
-starty = 1245
+startx = 251
+starty = 1164
 priority = 3
