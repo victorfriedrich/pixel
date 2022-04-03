@@ -137,6 +137,10 @@ function connectSocket() {
 
         switch (data.type.toLowerCase()) {
             case 'map':
+				if(data.data === undefined) {
+					socket.send(JSON.stringify({ type: 'getmap' }));
+					break;
+				}
                 console.log(`Neue map geladen (reason: ${data.reason ? data.reason : 'verbunden mit server'})`)
                 const structureCount = Object.keys(data.data.structures).length;
             let pixelCount = 0;
