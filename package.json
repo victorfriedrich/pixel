@@ -5,7 +5,8 @@
   "description": "Exzellenter r/place Bot",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node bot.js",
+    "standalone": "node bot-standalone.js"
   },
   "dependencies": {
     "fastify": "^3.27.4",
