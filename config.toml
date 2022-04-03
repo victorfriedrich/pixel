@@ -19,12 +19,19 @@ startx = 1333
 starty = 763
 priority = 3
 
-# [[structure]]
-# name = "rwth"
-# file = "images/rwth.png"
-# startx = 1333
-# starty = 753
-# priority = 2
+[[structure]]
+name = "rwth"
+file = "images/rwth+fh.png"
+startx = 1333
+starty = 753
+priority = 2
+
+[[structure]]
+name = "hwst"
+file = "images/hswt_heart.png"
+startx = 1348
+starty = 745
+priority = 2
 
 [[structure]]
 name = "pleadfish"
