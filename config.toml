@@ -11,6 +11,7 @@ version = 16
 "1" = 1
 "2" = 5
 "3" = 10
+"4" = 15
 
 [[structure]]
 name = "tum"
@@ -38,7 +39,7 @@ name = "pleadfish"
 file = "images/pleadfish.png"
 startx = 1333
 starty = 753
-priority = 3
+priority = 2
 
 #[[structure]]
 #name = "fish-background"
@@ -66,4 +67,4 @@ name = "logo2"
 file = "images/tum_large.png"
 startx = 251
 starty = 1164
-priority = 3
+priority = 4
