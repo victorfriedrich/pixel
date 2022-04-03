@@ -68,3 +68,10 @@ file = "images/tum_large.png"
 startx = 1235
 starty = 1172
 priority = 3
+
+[[structure]]
+name = "logo2outline"
+file = "images/tum_outline_large.png"
+startx = 1235
+starty = 1172
+priority = 4
