@@ -23,6 +23,7 @@ signale.config({
 
 
 var placeOrders = [];
+const VERSION_NUMBER = 1;
 
 let args=null
 
@@ -42,7 +43,7 @@ let defaultAccessToken = args[0];
 if (args.length > 4) {
     console.warn("Mehr als 4 Reddit Accounts gleichzeitig werden nicht empfohlen!")
 }
-
+var socket;
 
 const COLOR_MAPPINGS = {
     '#BE0039': 1,
@@ -72,8 +73,8 @@ const COLOR_MAPPINGS = {
 };
 
 (async function() {
-    setInterval(updateOrders, 5 * 60 * 1000); // Update orders every 5 minutes
-    await updateOrders();
+    connectSocket();
+
 
     const interval = 300 / args.length;
     var delay = 0;
@@ -109,6 +110,53 @@ function getPixelList() {
     }
     shuffleWeighted(structures);
     return structures.map(structure => structure.pixels).flat();
+}
+
+function connectSocket() {
+    console.log('Verbinden mit Commando server...')
+
+    socket = new WebSocket('wss://place.computerscholler.com/api/ws');
+
+    socket.onerror = function(e) {
+        console.error("Socket error: " + e.message)
+    }
+
+    socket.onopen = function () {
+        console.log('Verbunden mit Commando server!')
+        socket.send(JSON.stringify({ type: 'getmap' }));
+        socket.send(JSON.stringify({ type: 'brand', brand: `nodeheadlessV${VERSION_NUMBER}` }));
+    };
+
+    socket.onmessage = async function (message) {
+        var data;
+        try {
+            data = JSON.parse(message.data);
+        } catch (e) {
+            return;
+        }
+
+        switch (data.type.toLowerCase()) {
+            case 'map':
+                console.log(`Neue map geladen (reason: ${data.reason ? data.reason : 'verbunden mit server'})`)
+                const structureCount = Object.keys(data.data.structures).length;
+            let pixelCount = 0;
+            for (const structureName in data.data.structures) {
+                pixelCount += data.data.structures[structureName].pixels.length;
+            }
+            signale.info('Neue Strukturen geladen. Bilder: ' + structureCount + ' - Pixels: ' + pixelCount + '.');
+				placeOrders = data.data;
+                break;
+            default:
+                break;
+        }
+    };
+
+    socket.onclose = function (e) {
+        console.warn(`Commando server hat die Verbindung unterbrochen: ${e.reason}`)
+        console.error('Socketfehler: ', e.reason);
+        socket.close();
+        setTimeout(connectSocket, 1000);
+    };
 }
 
 async function attemptPlace(token) {
@@ -175,36 +223,6 @@ async function attemptPlace(token) {
 }
 
 
-function updateOrders() {
-    fetch(`https://raw.githubusercontent.com/etonaly/pixel/main/pixel.json`, { cache: "no-store" }).then(async (response) => {
-        if (!response.ok) return signale.warn('Bestellungen können nicht geladen werden!');
-        const data = await response.json();
-
-        if (JSON.stringify(data) !== JSON.stringify(placeOrders)) {
-            const structureCount = Object.keys(data.structures).length;
-            let pixelCount = 0;
-            for (const structureName in data.structures) {
-                pixelCount += data.structures[structureName].pixels.length;
-            }
-            signale.info('Neue Strukturen geladen. Bilder: ' + structureCount + ' - Pixels: ' + pixelCount + '.');
-        }
-
-        // TODO:
-        /*if (data?.version !== VERSION && !UPDATE_PENDING) {
-            UPDATE_PENDING = true
-            Toastify({
-                text: `NEUE VERSION VERFÜGBAR! Aktualisiere hier https://github.com/etonaly/pixel/raw/main/placedebot.user.js`,
-                duration: -1,
-                onClick: () => {
-                    // Tapermonkey captures this and opens a new tab
-                    window.location = 'https://github.com/etonaly/pixel/raw/main/placedebot.user.js'
-                }
-            }).showToast();
-
-        }*/
-        placeOrders = data;
-    }).catch((e) => signale.warn('Bestellungen können nicht geladen werden!', e));
-}
 
 /**
  * Places a pixel on the canvas, returns the "nextAvailablePixelTimestamp", if succesfull
