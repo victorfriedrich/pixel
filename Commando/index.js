@@ -6,28 +6,27 @@ const signale = require('signale');
 
 const app = express();
 
-PIXEL_URL = "https://raw.githubusercontent.com/etonaly/pixel/main/pixel.json"
+RAW_GITHUB_BASE_URL = "https://raw.githubusercontent.com/etonaly/pixel/"
+PIXEL_URL = RAW_GITHUB_BASE_URL + "main/pixel.json"
 IMAGE_URL = "https://github.com/etonaly/pixel/raw/main/output.png"
-COMMIT_URL = "https://api.github.com/repos/etonaly/pixel/commits/main?path=pixel.json"
+COMMIT_URL = "https://api.github.com/repos/etonaly/pixel/commits?path=output.png"
 var appData = {
     currentJson: {},
     currentMap: "blank.png",
     mapHistory: [],
 }
-getImage().then(image => {
-    appData.currentMap = image;
-    getLatestCommitMessage().then(message => {
-        appData.mapHistory = [{
-            image,
-            reason: message,
-            date: Date.now()
-        }]
-    }).catch(err => { signale.error(err) })
-}).catch(err => { signale.error(err) });
 
 getJson().then(json => {
     appData.currentJson = json;
 }).catch(err => { signale.error(err) })
+
+getImage().then(image => {
+    appData.currentMap = image;
+}).catch(err => { signale.error(err) });
+
+getHistory();
+
+
 
 
 var brandUsage = {};
@@ -157,13 +156,63 @@ function getLatestCommitMessage() {
                 }
                 try {
                     const commits = JSON.parse(body);
-                    resolve(commits["commit"]["message"]);
+                    resolve(commits[0]["commit"]["message"]);
                 } catch (e) {
                     console.log(e);
                     resolve("Github Update");
                 }
             }
         )
+    });
+}
+function getHistory(limit = 10) {
+    return new Promise(function (resolve, reject) {
+        request(
+            { uri: COMMIT_URL, headers: { 'User-Agent': "Mozilla/5.0 (Linux; Android 8.0.0; SM-G960F Build/R16NW) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.84 Mobile Safari/537.36" } },
+            function (error, _response, body) {
+                if (error) {
+                    resolve(error);
+                }
+                try {
+                    const commits = JSON.parse(body);
+                    resolve(commits);
+                } catch (e) {
+                    resolve(error);
+                }
+            }
+        )
+    }).catch(err => { signale.error(err) }).then(commits => {
+        commits.length = Math.min(commits.length, limit);
+        commits.reverse();
+        for (var commit of commits) {
+            try {
+                console.log(commit);
+                new Promise(function (resolve, reject) {
+                    var commit_image_url = RAW_GITHUB_BASE_URL + commit["sha"] + "/output.png";
+                    var new_message = commit["commit"]["message"];
+                    var new_date = Date.parse(commit["commit"]["author"]["date"]);
+                    const file = `${new_date}.png`;
+                    const path = `${__dirname}/maps/${file}`
+                    request
+                        .get(commit_image_url)
+                        .on('error', function (err) {
+                            console.error(err)
+                            reject(err);
+                        })
+                        .pipe(fs.createWriteStream(path));
+                    resolve([file, new_message, new_date]);
+                }).then( arr => {
+                    appData.mapHistory.push({
+                        message: arr[1],
+                        image: arr[0],
+                        date: arr[2]
+                    })
+                }).catch(e => signale.error(e));
+            } catch (e) {
+                signale.error(e)
+            }
+        }
+
     });
 }
 
@@ -182,8 +231,8 @@ setInterval(() => {
                     appData.currentMap = file;
                     getLatestCommitMessage().then(message => {
                         appData.mapHistory.push({
-                            file,
-                            reason: message,
+                            image: file,
+                            message: message,
                             date: Date.now()
                         })
                     }).catch(err => { signale.error(err) })
