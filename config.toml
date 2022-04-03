@@ -24,7 +24,7 @@ name = "rwth"
 file = "images/rwth.png"
 startx = 1333
 starty = 753
-priority = 2
+priority = 1
 
 [[structure]]
 name = "pleadfish"
