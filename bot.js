@@ -26,21 +26,22 @@ var placeOrders = [];
 const VERSION_NUMBER = 1;
 
 let args=null
+let redditSessionCookies = null
 
 try {
-    args = JSON.parse(process.env.PLACE_TOKENS);
+    redditSessionCookies = JSON.parse(process.env.PLACE_TOKENS);
 } catch (e) {
     signale.error("Invalid array in PLACE_TOKENS env var: " + e);
     process.exit(1);
 }
 
-if (args.length == 0) {
+if (redditSessionCookies.length == 0) {
     signale.error('Missing access token. Expected json array in PLACE_TOKENS env var');
     process.exit(1);
 }
-let defaultAccessToken = args[0];
+let defaultAccessToken;
 
-if (args.length > 4) {
+if (redditSessionCookies.length > 4) {
     console.warn("Mehr als 4 Reddit Accounts gleichzeitig werden nicht empfohlen!")
 }
 var socket;
@@ -73,6 +74,7 @@ const COLOR_MAPPINGS = {
 };
 
 (async function() {
+    await refreshTokens()
     connectSocket();
 
 
@@ -82,7 +84,8 @@ const COLOR_MAPPINGS = {
         t(accessToken, delay * 10);
         delay += interval;
     }
-    console.log("Setup complete")
+    setInterval(refreshTokens, 30 * 60 * 1000);
+    signale.info("Setup complete")
 })();
 
 let rgbaJoin = (a1, a2, rowSize = 1000, cellSize = 4) => {
@@ -113,17 +116,38 @@ function getPixelList() {
     return structures.map(structure => structure.pixels).flat();
 }
 
+async function refreshTokens() {
+    let tokens = [];
+    for (const cookie of redditSessionCookies) {
+        const response = await fetch("https://www.reddit.com/r/place/", {
+            headers: {
+                cookie: `reddit_session=${cookie}`
+            }
+        });
+        const responseText = await response.text()
+
+        let token = responseText.split('\"accessToken\":\"')[1].split('"')[0];
+        tokens.push(token);
+    }
+
+    signale.info("Refreshed tokens: ", tokens)
+
+    args = tokens;
+    defaultAccessToken = tokens[0];
+}
+
+
 function connectSocket() {
-    console.log('Verbinden mit Commando server...')
+    signale.info('Verbinden mit Commando server...')
 
     socket = new WebSocket('wss://place.computerscholler.com/api/ws');
 
     socket.onerror = function(e) {
-        console.error("Socket error: " + e.message)
+        signale.error("Socket error: " + e.message)
     }
 
     socket.onopen = function () {
-        console.log('Verbunden mit Commando server!')
+        signale.info('Verbunden mit Commando server!')
         socket.send(JSON.stringify({ type: 'getmap' }));
         socket.send(JSON.stringify({ type: 'brand', brand: `nodeheadlessV${VERSION_NUMBER}` }));
     };
@@ -142,7 +166,7 @@ function connectSocket() {
 					socket.send(JSON.stringify({ type: 'getmap' }));
 					break;
 				}
-                console.log(`Neue map geladen (reason: ${data.reason ? data.reason : 'verbunden mit server'})`)
+                signale.log(`Neue map geladen (reason: ${data.reason ? data.reason : 'verbunden mit server'})`)
                 const structureCount = Object.keys(data.data.structures).length;
             let pixelCount = 0;
             for (const structureName in data.data.structures) {
@@ -157,8 +181,8 @@ function connectSocket() {
     };
 
     socket.onclose = function (e) {
-        console.warn(`Commando server hat die Verbindung unterbrochen: ${e.reason}`)
-        console.error('Socketfehler: ', e.reason);
+        signale.warn(`Commando server hat die Verbindung unterbrochen: ${e.reason}`)
+        signale.error('Socketfehler: ', e.reason);
         socket.close();
         setTimeout(connectSocket, 1000);
     };
@@ -171,7 +195,7 @@ function t(token, time) {
 async function attemptPlace(token) {
     var map0;
     var map1;
-    console.log(`Trying to place with ${token}`)
+    signale.info(`Trying to place with ${token}`)
     let retry = () => attemptPlace(token);
     try {
         map0 = await getMapFromUrl(await getCurrentImageUrl('0'))
