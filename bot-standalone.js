@@ -47,36 +47,27 @@ if (redditSessionCookies.length > 4) {
 var socket;
 
 const COLOR_MAPPINGS = {
-	'#BE0039': 1,
-    '#6D001A': 0,
     '#BE0039': 1,
     '#FF4500': 2,
     '#FFA800': 3,
     '#FFD635': 4,
-    '#FFF8B8': 5,
     '#00A368': 6,
     '#00CC78': 7,
     '#7EED56': 8,
     '#00756F': 9,
     '#009EAA': 10,
-    '#00CCC0': 11,
     '#2450A4': 12,
     '#3690EA': 13,
     '#51E9F4': 14,
     '#493AC1': 15,
     '#6A5CFF': 16,
-    '#94B3FF': 17,
     '#811E9F': 18,
     '#B44AC0': 19,
-    '#E4ABFF': 20,
-    '#DE107F': 21,
     '#FF3881': 22,
     '#FF99AA': 23,
     '#6D482F': 24,
     '#9C6926': 25,
-    '#FFB470': 26,
     '#000000': 27,
-    '#515252': 28,
     '#898D90': 29,
     '#D4D7D9': 30,
     '#FFFFFF': 31
@@ -84,8 +75,9 @@ const COLOR_MAPPINGS = {
 
 (async function() {
     await refreshTokens()
-    connectSocket();
-
+    //connectSocket();
+    setInterval(updateOrders, 5 * 60 * 1000); // Update orders every 5 minutes
+    await updateOrders();
 
     const interval = 300 / args.length;
     var delay = 0;
@@ -323,7 +315,7 @@ async function place(x, y, color, token = defaultAccessToken) {
                             'y': y % 1000
                         },
                         'colorIndex': color,
-                        'canvasIndex': getCanvas(x, y)
+                        'canvasIndex': (x > 999 ? (y > 999 ? 3 : 1): (y > 999 ? 2 : 0))
                     }
                 }
             },
@@ -466,10 +458,32 @@ function sanetizeTokens(list) {
 	return list.map(sanetizeToken)
 }
 
-function getCanvas(x, y) {
-    if (x <= 999) {
-        return y <= 999 ? 0 : 2;
-    } else {
-        return y <= 999 ? 1 : 3;
-    }
+function updateOrders() {
+    fetch(`https://raw.githubusercontent.com/etonaly/pixel/main/pixel.json`, { cache: "no-store" }).then(async (response) => {
+        if (!response.ok) return signale.warn('Bestellungen können nicht geladen werden!');
+        const data = await response.json();
+
+        if (JSON.stringify(data) !== JSON.stringify(placeOrders)) {
+            const structureCount = Object.keys(data.structures).length;
+            let pixelCount = 0;
+            for (const structureName in data.structures) {
+                pixelCount += data.structures[structureName].pixels.length;
+            }
+            signale.info('Neue Strukturen geladen. Bilder: ' + structureCount + ' - Pixels: ' + pixelCount + '.');
+        }
+
+        // TODO:
+        /*if (data?.version !== VERSION && !UPDATE_PENDING) {
+            UPDATE_PENDING = true
+            Toastify({
+                text: `NEUE VERSION VERFÜGBAR! Aktualisiere hier https://github.com/etonaly/pixel/raw/main/placedebot.user.js`,
+                duration: -1,
+                onClick: () => {
+                    // Tapermonkey captures this and opens a new tab
+                    window.location = 'https://github.com/etonaly/pixel/raw/main/placedebot.user.js'
+                }
+            }).showToast();
+        }*/
+        placeOrders = data;
+    }).catch((e) => signale.warn('Bestellungen können nicht geladen werden!', e));
 }
