@@ -195,18 +195,22 @@ function t(token, time) {
 async function attemptPlace(token) {
     var map0;
     var map1;
+    var map2;
+    var map3;
     signale.info(`Trying to place with ${sanetizeToken(token)}`)
     let retry = () => attemptPlace(token);
     try {
         map0 = await getMapFromUrl(await getCurrentImageUrl('0'))
         map1 = await getMapFromUrl(await getCurrentImageUrl('1'));
+		map2 = await getCanvasFromUrl(await getCurrentImageUrl('2'))
+		map3 = await getCanvasFromUrl(await getCurrentImageUrl('3'))
     } catch (e) {
         signale.warn('Fehler beim Abrufen der Zeichenfläche. Neuer Versuch in 15 Sekunden: ', e);
         t(token, 15000); // probeer opnieuw in 15sec.
         return;
     }
 
-    const rgbaCanvas = rgbaJoin(map0.data, map1.data);
+    const rgbaCanvas =rgbaJoin(map3.data, rgbaJoin(map2.data, rgbaJoin(map0.data, map1.data)));
     const pixelList = getPixelList();
 
     let foundPixel = false;
@@ -279,7 +283,7 @@ async function place(x, y, color, token = defaultAccessToken) {
                             'y': y % 1000
                         },
                         'colorIndex': color,
-                        'canvasIndex': (x > 999 ? 1 : 0)
+                        'canvasIndex': (x > 999 ? (y > 999 ? 3 : 1): (y > 999 ? 2 : 0))
                     }
                 }
             },
