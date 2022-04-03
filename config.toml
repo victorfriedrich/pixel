@@ -19,7 +19,7 @@ name = "old-stuff"
 file = "images/everything.png"
 startx = 1333
 starty = 753
-priority = 5
+priority = 0
 
 [[structure]]
 name = "rwth2"
@@ -40,7 +40,7 @@ priority = 2
 #file = "images/fish-background.png"
 #startx = 1333
 #starty = 753
-#priority = 1
+#priority = 0
 
 [[structure]]
 name = "augsburg"
@@ -68,4 +68,4 @@ name = "logo2outline"
 file = "images/tum_outline_large.png"
 startx = 1235
 starty = 1172
-priority = 4
+priority = 5

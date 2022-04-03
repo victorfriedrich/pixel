@@ -2,7 +2,7 @@
     "version": 16,
     "structures": {
         "logo2outline": {
-            "priority": 4,
+            "priority": 5,
             "pixels": [
                 {
                     "x": 1239,
@@ -18638,7 +18638,7 @@
             ]
         },
         "old-stuff": {
-            "priority": 5,
+            "priority": 0,
             "pixels": [
                 {
                     "x": 1333,
