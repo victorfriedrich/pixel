@@ -59,6 +59,6 @@ priority = 0
 [[structure]]
 name = "logo2"
 file = "images/tum_medium.png"
-startx = 1235
-starty = 1172
+startx = 1238
+starty = 1177
 priority = 5
