@@ -292,7 +292,7 @@ async function place(x, y, color, token = defaultAccessToken) {
                             'y': y % 1000
                         },
                         'colorIndex': color,
-                        'canvasIndex': (x > 999 ? (y > 999 ? 3 : 1): (y > 999 ? 2 : 0))
+                        'canvasIndex': getCanvas(x, y)
                     }
                 }
             },
@@ -433,4 +433,12 @@ function sanetizeToken(token) {
 
 function sanetizeTokens(list) {
 	return list.map(sanetizeToken)
+}
+
+function getCanvas(x, y) {
+    if (x <= 999) {
+        return y <= 999 ? 0 : 2;
+    } else {
+        return y <= 999 ? 1 : 3;
+    }
 }
