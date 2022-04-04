@@ -76,3 +76,10 @@ file = "images/pleadfish.png"
 startx = 1217
 starty = 1173
 priority = 3
+
+[[structure]]
+name = "augsburg2"
+file = "images/augsburg2.png"
+startx = 1304
+starty = 1948
+priority = 2
