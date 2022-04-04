@@ -63,9 +63,9 @@ startx = 1238
 starty = 1177
 priority = 5
 
-[[structure]]
-name = "lmu"
-file = "images/lmao.png"
-startx = 1241
-starty = 1191
-priority = 1
+# [[structure]]
+# name = "lmu"
+# file = "images/lmao.png"
+# startx = 1241
+# starty = 1191
+# priority = 1
