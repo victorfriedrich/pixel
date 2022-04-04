@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         PlaceDE Bot-Commando Edition
 // @namespace    https://github.com/PlaceDE/Bot
-// @version      16
+// @version      17
 // @description  /r/place bot
 // @author       NoahvdAa, reckter, SgtChrome, nama17
 // @match        https://www.reddit.com/r/place/*
@@ -13,6 +13,7 @@
 // @downloadURL  https://github.com/etonaly/pixel/raw/main/placedebot-comando.user.js
 // @grant        GM_getResourceText
 // @grant        GM_addStyle
+// @grant        GM.xmlHttpRequest
 // ==/UserScript==
 
 // Sorry voor de rommelige code, haast en clean gaatn iet altijd samen ;)
@@ -22,7 +23,7 @@ var placeOrders = [];
 var accessToken;
 var canvas = document.createElement('canvas');
 
-const VERSION = 16
+const VERSION = 17
 var UPDATE_PENDING = false;
 
 const COLOR_MAPPINGS = {
@@ -165,10 +166,10 @@ async function attemptPlace() {
 	var ctx;
 	try {
 		const canvasUrl = await getCurrentImageUrl();
-		ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), canvas, 0, 0);
-		ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), canvas, 1000, 0);
-		ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), canvas, 0, 1000)
-		ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), canvas, 1000, 1000)
+		ctx = await getCanvasFromUrl(await getCurrentImageUrl('0'), canvas, 0, 0, false);
+		ctx = await getCanvasFromUrl(await getCurrentImageUrl('1'), canvas, 1000, 0, false);
+		ctx = await getCanvasFromUrl(await getCurrentImageUrl('2'), canvas, 0, 1000, false)
+		ctx = await getCanvasFromUrl(await getCurrentImageUrl('3'), canvas, 1000, 1000, false)
 	} catch (e) {
 		console.warn('Fehler beim Abrufen der Zeichenfläche:', e);
 		Toastify({
@@ -412,18 +413,37 @@ async function getCurrentImageUrl(id = '0') {
 	});
 }
 
-function getCanvasFromUrl(url, canvas, x = 0, y = 0) {
-	return new Promise((resolve, reject) => {
-		var ctx = canvas.getContext('2d');
-		var img = new Image();
-		img.crossOrigin = 'anonymous';
-		img.onload = () => {
-			ctx.drawImage(img, x, y);
-			resolve(ctx);
-		};
-		img.onerror = reject;
-		img.src = url;
-	});
+function getCanvasFromUrl(url, canvas, x = 0, y = 0, clearCanvas = false) {
+    return new Promise((resolve, reject) => {
+        let loadImage = ctx => {
+        GM.xmlHttpRequest({
+            method: "GET",
+            url: url,
+            responseType: 'blob',
+            onload: function(response) {
+            var urlCreator = window.URL || window.webkitURL;
+            var imageUrl = urlCreator.createObjectURL(this.response);
+            var img = new Image();
+            img.onload = () => {
+                if (clearCanvas) {
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                }
+                ctx.drawImage(img, x, y);
+                resolve(ctx);
+            };
+            img.onerror = () => {
+                Toastify({
+                    text: 'Fehlber beim Abrufen der Map. Erneut probieren in 3 sec...',
+                    duration: 3000
+                }).showToast();
+                setTimeout(() => loadImage(ctx), 3000);
+            };
+            img.src = imageUrl;
+  }
+})
+        };
+        loadImage(canvas.getContext('2d'));
+    });
 }
 
 function rgbToHex(r, g, b) {
