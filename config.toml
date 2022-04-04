@@ -78,6 +78,13 @@ starty = 1173
 priority = 3
 
 [[structure]]
+name = "small_tum_tuw"
+file = "images/tum_tuw_small.png"
+startx = 1232
+starty = 1173
+priority = 3
+
+[[structure]]
 name = "augsburg2"
 file = "images/augsburg2.png"
 startx = 1304
