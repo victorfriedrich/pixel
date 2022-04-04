@@ -28,8 +28,12 @@ const VERSION_NUMBER = 1;
 let args=null
 let redditSessionCookies = null
 
+// of form http://46.250.171.31:8080
+let proxies = []
+
 try {
     redditSessionCookies = JSON.parse(process.env.PLACE_TOKENS);
+    proxies = JSON.parse(process.env.PROXIES);
 } catch (e) {
     signale.error("Invalid array in PLACE_TOKENS env var: " + e);
     process.exit(1);
@@ -41,9 +45,11 @@ if (redditSessionCookies.length == 0) {
 }
 let defaultAccessToken;
 
-if (redditSessionCookies.length > 4) {
+// Doesn't take fingerprinting etc. into account
+if(proxies.length * 4 < redditSessionCookies.length) {
     console.warn("Mehr als 4 Reddit Accounts gleichzeitig werden nicht empfohlen!")
 }
+
 var socket;
 
 const COLOR_MAPPINGS = {
@@ -158,11 +164,15 @@ function getPixelList() {
 
 async function refreshTokens() {
     let tokens = [];
-    for (const cookie of redditSessionCookies) {
+    for (const [index, cookie] of redditSessionCookies) {
+	const proxyIndex = Math.floor(index / 4);
+	const proxyAgent = new HttpsProxyAgent(proxies[proxyIndex]);
+	      
         const response = await fetch("https://www.reddit.com/r/place/", {
             headers: {
                 cookie: `reddit_session=${cookie}`
-            }
+            },
+	    agent: proxyAgent
         });
         const responseText = await response.text()
 
@@ -310,8 +320,13 @@ async function attemptPlace(token) {
  * @returns {Promise<number>}
  */
 async function place(x, y, color, token = defaultAccessToken) {
+	
+    const proxyIndex = Math.floor(args.indexOf(token) / 4);
+    const proxyAgent = new HttpsProxyAgent(proxies[proxyIndex]);
+	
     const response = await fetch('https://gql-realtime-2.reddit.com/query', {
         method: 'POST',
+	agent: proxyAgent,
         body: JSON.stringify({
             'operationName': 'setPixel',
             'variables': {
