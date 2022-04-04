@@ -69,3 +69,10 @@ priority = 5
 # startx = 1241
 # starty = 1191
 # priority = 1
+
+[[structure]]
+name = "fish2"
+file = "images/pleadfish.png"
+startx = 1217
+starty = 1173
+priority = 3
